@@ -3,6 +3,7 @@ package fluentd
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"time"
@@ -20,7 +21,7 @@ type FluentdAdapter struct {
 func (adapter *FluentdAdapter) Stream(logstream chan *router.Message) {
 	for message := range logstream {
 		timestamp := int32(time.Now().Unix())
-		tag := "docker." + message.Container.Config.Hostname
+		tag := fmt.Sprintf("%s.%s.%s", "docker", message.Container.Config.Hostname, message.Container.Config.Image)
 		record := make(map[string]string)
 		record["message"] = message.Data
 		record["docker.hostname"] = message.Container.Config.Hostname
