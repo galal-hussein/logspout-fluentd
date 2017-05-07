@@ -59,7 +59,7 @@ func NewFluentdAdapter(route *router.Route) (router.LogAdapter, error) {
 // Stream handles a stream of messages from Logspout. Implements router.logAdapter.
 func (adapter *FluentdAdapter) Stream(logstream chan *router.Message) {
 	for message := range logstream {
-		timestamp := int32(time.Now().Unix())
+		timestamp := getTimestampMicroecond()
 		tag := getInfraTag(message)
 		if len(tag) == 0 {
 			continue
@@ -167,4 +167,8 @@ func getInfraTag(m *router.Message) string {
 		}
 	}
 	return ""
+}
+
+func getTimestampMicroecond() int32 {
+	return int32(time.Now().UnixNano() / int64(time.Microsecond))
 }
