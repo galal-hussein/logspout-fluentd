@@ -3,10 +3,8 @@ package fluentd
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net"
-	"os"
 	"strings"
 	"time"
 
@@ -21,22 +19,22 @@ type FluentdAdapter struct {
 }
 
 type Record struct {
-	Message string `json:"message"`
-	Host    string `json:"host"`
-	Docker  Docker `json:"docker"`
+	Message       string `json:"message"`
+	ContainerID   string `json:"container_id"`
+	ContainerName string `json:"container_name"`
 }
 
-type Docker struct {
-	Id      string            `json:"id"`
-	Image   string            `json:"image"`
-	Name    string            `json:"name"`
-	Status  string            `json:"status"`
-	Command string            `json:"command"`
-	Labels  map[string]string `json:"labels"`
-}
+var infraStackImages map[string][]string
 
 func init() {
-	router.AdapterFactories.Register(NewFluentdAdapter, "fluentd")
+	router.AdapterFactories.Register(NewFluentdAdapter, "fluentd-rancher")
+	infraStackImages = make(map[string][]string)
+	infraStackImages["healthcheck"] = append(infraStackImages["healtcheck"], "rancher/healthcheck")
+	infraStackImages["scheduler"] = append(infraStackImages["scheduler"], "rancher/scheduler")
+	infraStackImages["network"] = append(infraStackImages["network"], "rancher/network-manager")
+	infraStackImages["network"] = append(infraStackImages["network"], "rancher/metadata")
+	infraStackImages["network"] = append(infraStackImages["network"], "rancher/dns")
+	infraStackImages["ipsec"] = append(infraStackImages["ipsec"], "rancher/net")
 }
 
 // NewFluentdAdapter creates a Logspout fluentd adapter instance.
@@ -62,25 +60,15 @@ func NewFluentdAdapter(route *router.Route) (router.LogAdapter, error) {
 func (adapter *FluentdAdapter) Stream(logstream chan *router.Message) {
 	for message := range logstream {
 		timestamp := int32(time.Now().Unix())
-		tag := fmt.Sprintf("%s.%s.%s", "docker", message.Container.Config.Hostname, message.Container.Config.Image)
-		hname, _ := os.Hostname()
+		tag := getInfraTag(message)
+		if len(tag) == 0 {
+			continue
+		}
 
 		record := Record{}
 		record.Message = message.Data
-		record.Host = hname
-		record.Docker = Docker{}
-		record.Docker.Id = message.Container.ID
-		record.Docker.Image = message.Container.Config.Image
-		record.Docker.Name = message.Container.Name
-		record.Docker.Status = message.Container.State.String()
-		record.Docker.Command = strings.Join(message.Container.Config.Cmd, " ")
-
-		record.Docker.Labels = make(map[string]string)
-
-		for key, value := range message.Container.Config.Labels {
-			label := strings.Replace(key, ".", "-", -1)
-			record.Docker.Labels[label] = value
-		}
+		record.ContainerID = message.Container.ID
+		record.ContainerName = message.Container.Name
 
 		data := []interface{}{tag, timestamp, record}
 
@@ -166,4 +154,17 @@ func retryExp(fun func() error, tries uint) error {
 
 		time.Sleep((1 << try) * 10 * time.Millisecond)
 	}
+}
+
+func getInfraTag(m *router.Message) string {
+	containerImage := strings.Split(m.Container.Config.Image, ":")[0]
+	//log.Println("containerImage: ", containerImage)
+	for k, v := range infraStackImages {
+		for _, image := range v {
+			if image == containerImage {
+				return k
+			}
+		}
+	}
+	return ""
 }
