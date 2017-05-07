@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -22,6 +23,7 @@ type Record struct {
 	Message       string `json:"message"`
 	ContainerID   string `json:"container_id"`
 	ContainerName string `json:"container_name"`
+	Host          string `json:"host"`
 }
 
 var infraStackImages map[string][]string
@@ -67,6 +69,7 @@ func (adapter *FluentdAdapter) Stream(logstream chan *router.Message) {
 
 		record := Record{}
 		record.Message = message.Data
+		record.Host, _ = os.Hostname()
 		record.ContainerID = message.Container.ID
 		record.ContainerName = message.Container.Name
 
