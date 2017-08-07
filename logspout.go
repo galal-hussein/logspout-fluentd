@@ -173,5 +173,5 @@ func getInfraTag(m *router.Message) string {
 }
 
 func getTimestampMicroecond() int32 {
-	return int32(time.Now().UnixNano() / int64(time.Microsecond))
+	return int32(time.Now().UnixNano() / 1000)
 }
