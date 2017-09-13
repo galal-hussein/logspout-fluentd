@@ -31,12 +31,13 @@ var infraStackImages map[string][]string
 func init() {
 	router.AdapterFactories.Register(NewFluentdAdapter, "fluentd-rancher")
 	infraStackImages = make(map[string][]string)
-	infraStackImages["healthcheck"] = append(infraStackImages["healtcheck"], "rancher/healthcheck")
-	infraStackImages["scheduler"] = append(infraStackImages["scheduler"], "rancher/scheduler")
-	infraStackImages["network"] = append(infraStackImages["network"], "rancher/network-manager")
-	infraStackImages["network"] = append(infraStackImages["network"], "rancher/metadata")
-	infraStackImages["network"] = append(infraStackImages["network"], "rancher/dns")
-	infraStackImages["ipsec"] = append(infraStackImages["ipsec"], "rancher/net")
+	//infraStackImages["healthcheck"] = append(infraStackImages["healtcheck"], "rancher/healthcheck")
+	//infraStackImages["scheduler"] = append(infraStackImages["scheduler"], "rancher/scheduler")
+	//infraStackImages["network"] = append(infraStackImages["network"], "rancher/network-manager")
+	//infraStackImages["network"] = append(infraStackImages["network"], "rancher/metadata")
+	//infraStackImages["network"] = append(infraStackImages["network"], "rancher/dns")
+	//infraStackImages["ipsec"] = append(infraStackImages["ipsec"], "rancher/net")
+	infraStackImages["etcd"] = append(infraStackImages["etcd"], "rancher/etcd")
 }
 
 // NewFluentdAdapter creates a Logspout fluentd adapter instance.
